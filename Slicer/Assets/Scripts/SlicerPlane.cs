@@ -20,7 +20,16 @@ public class SlicerPlane : MonoBehaviour
 
     }
 
-    public void Slice(ISliceable sliceable)
+    private void OnTriggerEnter(Collider other)
+    {
+        //ISliceable s = other.GetComponent<ISliceable>();
+        //if (null != s)
+        //{
+        //    Sliceable[] ss = s.Slice(this);
+        //}
+    }
+
+    public void Slice(Sliceable sliceable)
     {
         sliceable.Slice(this);
     }

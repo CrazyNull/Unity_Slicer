@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class Sliceable : MonoBehaviour, ISliceable
+public class Sliceable : MonoBehaviour
 {
     [Serializable]
     public struct planeData

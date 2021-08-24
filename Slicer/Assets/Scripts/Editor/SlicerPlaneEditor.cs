@@ -16,7 +16,7 @@ public class SlicerPlaneEditor : Editor
             GameObject go = GameObject.Find("Sliceable");
             if (null != go)
             {
-                ISliceable sliceable = go.GetComponent<ISliceable>();
+                Sliceable sliceable = go.GetComponent<Sliceable>();
                 if (null != sliceable)
                 {
                     cp.Slice(sliceable);
