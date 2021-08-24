@@ -119,6 +119,7 @@ public class Sliceable : MonoBehaviour
             }
         }
 
+
         for (int i = 0; i < removeIndexs.Count; ++i)
         {
             int index = removeIndexs[i];

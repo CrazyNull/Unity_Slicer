@@ -2,15 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CrossPointTest : MonoBehaviour
+public class PointProjectionTest : MonoBehaviour
 {
-    public Transform Point1;
-    public Transform Point2;
+    public Transform Point;
     public SlicerPlane Plane;
 
     public bool Show = false;
-
-    protected Vector3? _cross = null;   
+    protected Vector3? _projection = null;
 
     // Start is called before the first frame update
     void Start()
@@ -24,23 +22,22 @@ public class CrossPointTest : MonoBehaviour
         if (Show)
         {
             Show = false;
-            this.UpdateCrossPoint();
+            this.UpdateProjection();
         }
     }
 
-
-    protected void UpdateCrossPoint()
+    protected void UpdateProjection()
     {
-        this._cross = SlicerPlane.CrossPoint(Plane.Point, Plane.Normal,Point1.position,Point2.position);
+        this._projection = SlicerPlane.PointProjection(Plane.Point, Plane.Normal, Point.position);
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(Point1.position, Point2.position);
-        if (null != this._cross)
+        Gizmos.DrawLine(Point.position, Plane.transform.position);
+        if (null != this._projection)
         {
-            Gizmos.DrawSphere(this._cross.Value,0.25f);
+            Gizmos.DrawSphere(this._projection.Value, 0.25f);
         }
     }
 }

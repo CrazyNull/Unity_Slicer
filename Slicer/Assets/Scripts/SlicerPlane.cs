@@ -36,7 +36,7 @@ public class SlicerPlane : MonoBehaviour
 
     public static SideOfPlane SideOf(Vector3 Point, Vector3 Normal, Vector3 pt)
     {
-        float result = Vector3.Dot(Normal, pt) - Vector3.Dot(Normal,Point);
+        float result = Vector3.Dot(Normal, pt) - Vector3.Dot(Normal, Point);
         if (result > Epsilon) return SideOfPlane.UP;
         if (result < -Epsilon) return SideOfPlane.DOWN;
         return SideOfPlane.ON;
@@ -84,5 +84,13 @@ public class SlicerPlane : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public static Vector3? PointProjection(Vector3 planePoint, Vector3 planeNormal, Vector3 point)
+    {
+        Vector3 vectorpp2p = point - planePoint;
+        float angle = 90f - Mathf.Acos(Vector3.Dot(vectorpp2p.normalized, planeNormal.normalized)) * Mathf.Rad2Deg;
+        float dis = vectorpp2p.magnitude * Mathf.Sin(angle * Mathf.Deg2Rad);
+        return point - dis * planeNormal.normalized;
     }
 }
