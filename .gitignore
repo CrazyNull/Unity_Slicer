@@ -1,0 +1,8 @@
+Slicer/Library/
+Slicer/Logs/
+Slicer/obj/
+Slicer/.vsconfig
+Slicer/Assembly-CSharp.csproj
+Slicer/Assembly-CSharp-Editor.csproj
+Slicer/Slicer.sln
+Slicer/.vs/
