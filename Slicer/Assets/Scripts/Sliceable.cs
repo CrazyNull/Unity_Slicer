@@ -168,5 +168,4 @@ public class Sliceable : MonoBehaviour
         this.Collider.sharedMesh = colliderMesh;
 
     }
-
 }
