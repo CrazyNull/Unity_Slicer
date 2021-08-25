@@ -19,6 +19,9 @@ public class Sliceable : MonoBehaviour
     public List<planeData> _pds = new List<planeData>();
     protected Texture2D _tex = null;
 
+    public static Vector3  MaxV3 => _maxV3;
+    private static readonly  Vector3 _maxV3 = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+
     public Sliceable[] Slice(SlicerPlane plane)
     {
         Sliceable otherSliceable = GameObject.Instantiate<GameObject>(this.gameObject, this.transform.parent).GetComponent<Sliceable>();
@@ -54,7 +57,7 @@ public class Sliceable : MonoBehaviour
         }
         this._tex.Apply();
         this.Renderer.material.SetTexture("_PlaneTex", _tex);
-        this.RefreshCollider();
+        this.RefreshCollider(this._pds[this._pds.Count - 1]);
 
 
         if (otherSliceable._pds.Count < 10)
@@ -88,12 +91,12 @@ public class Sliceable : MonoBehaviour
         }
         otherSliceable._tex.Apply();
         otherSliceable.Renderer.material.SetTexture("_PlaneTex", otherSliceable._tex);
-        otherSliceable.RefreshCollider();
+        otherSliceable.RefreshCollider(otherSliceable._pds[otherSliceable._pds.Count - 1]);
 
         return new Sliceable[2] { this,otherSliceable};
     }
 
-    public void RefreshCollider()
+    public void RefreshCollider(planeData pData)
     {
         Mesh mesh = this.MeshFilter.mesh;
 
@@ -104,47 +107,128 @@ public class Sliceable : MonoBehaviour
         triangles.AddRange(mesh.triangles);
 
         List<int> removeIndexs = new List<int>();
-        for (int i = 0; i < this._pds.Count; ++i)
+        for (int j = 0; j < vertices.Count; ++j)
         {
-            planeData pData = this._pds[i];
-            for (int j = 0; j < vertices.Count; ++j)
+            Vector3 v = vertices[j];
+            float result = Vector3.Dot(pData.normal, v) - Vector3.Dot(pData.normal, pData.point);
+            if (result > 0.0001f)
             {
-                Vector3 v = vertices[j];
-                float result = Vector3.Dot(pData.normal, v) - Vector3.Dot(pData.normal, pData.point);
-                if (result > 0.0001f)
-                {
-                    removeIndexs.Add(j);
-                    vertices[j] = Vector3.zero;
-                }
+                removeIndexs.Add(j);
             }
         }
 
+        List<Vector3> newVertices = new List<Vector3>();
+        List<int> newTriangles = new List<int>();
+
+        for (int j = 0; j < triangles.Count;)
+        {
+            int t0 = triangles[j];
+            int t1 = triangles[j + 1];
+            int t2 = triangles[j + 2];
+
+            List<int> closeList = new List<int>();
+            List<int> openList = new List<int>();
+
+            if (removeIndexs.Contains(t0)) closeList.Add(t0); else openList.Add(t0);
+            if (removeIndexs.Contains(t1)) closeList.Add(t1); else openList.Add(t1);
+            if (removeIndexs.Contains(t2)) closeList.Add(t2); else openList.Add(t2);
+
+            if (closeList.Count == 1)
+            {
+                Vector3? c2o1 = SlicerPlane.CrossPoint(pData.point,pData.normal,vertices[closeList[0]], vertices[openList[0]]);
+                Vector3? c2o2 = SlicerPlane.CrossPoint(pData.point, pData.normal,vertices[closeList[0]], vertices[openList[1]]);
+
+                int c2o1Index = vertices.Count + newVertices.Count;
+                newVertices.Add(c2o1.Value);
+                int c2o2Index = vertices.Count + newVertices.Count;
+                newVertices.Add(c2o2.Value);
+
+                Vector3 n = SlicerPlane.TriangleNormal(new Vector3[3] { vertices[t0], vertices[t1], vertices[t2] });
+
+                Vector3[] nt1 = new Vector3[3] { c2o1.Value, vertices[openList[0]], c2o2.Value };
+                if (0 <= Vector3.Dot(SlicerPlane.TriangleNormal(nt1), n))
+                {
+                    newTriangles.Add(c2o1Index);
+                    newTriangles.Add(openList[0]);
+                    newTriangles.Add(openList[1]);
+                }
+                else
+                {
+                    newTriangles.Add(openList[1]);
+                    newTriangles.Add(openList[0]);
+                    newTriangles.Add(c2o1Index);
+                }
+
+
+                Vector3[] nt2 = new Vector3[3] { c2o1.Value, vertices[openList[1]], c2o2.Value };
+                if (0 <= Vector3.Dot(SlicerPlane.TriangleNormal(nt2), n))
+                {
+                    newTriangles.Add(c2o2Index);
+                    newTriangles.Add(c2o1Index);
+                    newTriangles.Add(openList[1]);
+                }
+                else
+                {
+                    newTriangles.Add(openList[1]);
+                    newTriangles.Add(c2o1Index);
+                    newTriangles.Add(c2o2Index);
+                }
+
+            }
+            else if (closeList.Count == 2)
+            {
+                Vector3? o2c1 = SlicerPlane.CrossPoint(pData.point, pData.normal, vertices[openList[0]], vertices[closeList[0]]);
+                Vector3? o2c2 = SlicerPlane.CrossPoint(pData.point, pData.normal, vertices[openList[0]], vertices[closeList[1]]);
+
+                int o2c1Index = vertices.Count + newVertices.Count;
+                newVertices.Add(o2c1.Value);
+                int o2c2Index = vertices.Count + newVertices.Count;
+                newVertices.Add(o2c2.Value);
+
+                Vector3 n = SlicerPlane.TriangleNormal(new Vector3[3] { vertices[t0], vertices[t1], vertices[t2] });
+                Vector3[] nt1 = new Vector3[3] { o2c1.Value, vertices[openList[0]], o2c2.Value };
+                if (0 <= Vector3.Dot(SlicerPlane.TriangleNormal(nt1),n))
+                {
+                    newTriangles.Add(o2c1Index);
+                    newTriangles.Add(openList[0]);
+                    newTriangles.Add(o2c2Index);
+                }
+                else
+                {
+                    newTriangles.Add(o2c2Index);
+                    newTriangles.Add(openList[0]);
+                    newTriangles.Add(o2c1Index);
+                }
+
+                //newTriangles.Add(openList[0]);
+                //newTriangles.Add(o2c1Index);
+                //newTriangles.Add(o2c2Index);
+            }
+
+            if (closeList.Count > 0)
+            {
+                triangles.RemoveAt(j);
+                triangles.RemoveAt(j);
+                triangles.RemoveAt(j);
+            }
+            else
+            {
+                j += 3;
+            }
+        }
+
+        vertices.AddRange(newVertices);
+        triangles.AddRange(newTriangles);
 
         for (int i = 0; i < removeIndexs.Count; ++i)
         {
             int index = removeIndexs[i];
-            for (int j = 0; j < triangles.Count;)
-            {
-                int t0 = triangles[j];
-                int t1 = triangles[j + 1];
-                int t2 = triangles[j + 2];
-
-                if (t0 == index || t1 == index || t2 == index)
-                {
-                    triangles.RemoveAt(j);
-                    triangles.RemoveAt(j);
-                    triangles.RemoveAt(j);
-                }
-                else
-                {
-                    j += 3;
-                }
-            }
+            vertices[index] = MaxV3;
         }
 
         for (int i = 0; i < vertices.Count; ++i)
         {
-            if (Vector3.zero == vertices[i])
+            if (MaxV3 == vertices[i])
             {
                 vertices.RemoveAt(i);
                 for (int j = 0; j < triangles.Count; ++j)

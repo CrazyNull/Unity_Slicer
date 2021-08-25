@@ -9,26 +9,6 @@ public class SlicerPlane : MonoBehaviour
     public Vector3 Point => this.transform.position;
     public Vector3 Normal => this.transform.up;
 
-
-    void Start()
-    {
-
-    }
-
-    void Update()
-    {
-
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        //ISliceable s = other.GetComponent<ISliceable>();
-        //if (null != s)
-        //{
-        //    Sliceable[] ss = s.Slice(this);
-        //}
-    }
-
     public void Slice(Sliceable sliceable)
     {
         sliceable.Slice(this);
@@ -40,6 +20,11 @@ public class SlicerPlane : MonoBehaviour
         if (result > Epsilon) return SideOfPlane.UP;
         if (result < -Epsilon) return SideOfPlane.DOWN;
         return SideOfPlane.ON;
+    }
+
+    public Vector3? CrossPoint(Vector3 point1, Vector3 point2)
+    {
+        return CrossPoint(this.Point, this.Normal, point1, point2);
     }
 
     public static Vector3? CrossPoint(Vector3 planePoint, Vector3 planeNormal, Vector3 point1, Vector3 point2)
@@ -86,11 +71,22 @@ public class SlicerPlane : MonoBehaviour
         return null;
     }
 
+    public Vector3? PointProjection(Vector3 point)
+    {
+        return PointProjection(this.Point, this.Normal, point);
+    }
+
     public static Vector3? PointProjection(Vector3 planePoint, Vector3 planeNormal, Vector3 point)
     {
         Vector3 vectorpp2p = point - planePoint;
         float angle = 90f - Mathf.Acos(Vector3.Dot(vectorpp2p.normalized, planeNormal.normalized)) * Mathf.Rad2Deg;
         float dis = vectorpp2p.magnitude * Mathf.Sin(angle * Mathf.Deg2Rad);
         return point - dis * planeNormal.normalized;
+    }
+
+
+    public static Vector3 TriangleNormal(Vector3[] t)
+    {
+        return Vector3.Cross(t[1] - t[0],t[2] - t[1]);
     }
 }
